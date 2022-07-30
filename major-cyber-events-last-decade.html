@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<body>
+  <head>
+    <style>
+    .topnav {
+  background-color: darkblue;
+  overflow: hidden;
+}
+
+/* Style the links inside the navigation bar */
+.topnav a {
+  float: left;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+/* Change the color of links on hover */
+.topnav a:hover {
+  background-color: grey;
+  color: black;
+}
+
+/* Add a color to the active/current link */
+.topnav a.active {
+  background-color: lightblue;
+  color: white;
+}
+</style>
+</head>
+
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+<h1>Major Cyber Events of the Last Decade</h1>
+<div class="topnav">
+  <a class="active" href="major-cyber-events-last-decade.html">Events</a>
+  <a href="breach-count-year-animated.html">Counts</a>
+  <a title="Only available from the Breach Count page">Cost</a>
+</div>
+<br>
+Cybersecurity has come to the forefront of businesses, governments, and individuals the recent years. Data breaches have become a regular event and their impacts are increasing.
+<br><br>The timeline below shows significant data breaches over the past decade. There are two highlight events to provide additional context to the current state of the problem.
+<br>(Please navigate to the Counts page next. Note the Cost page can only be navigated to from the Counts page.)
+<div id="timeline_viz"></div>
+
+<script>
+
+  d3.csv("https://raw.githubusercontent.com/greenfacts/cyber-growth-by-year/main/major-breaches-by-year.csv", function(data) {
+
+  // dims and marg
+  var margin = {top: 10, right: 30, bottom: 150, left: 100},
+      width = 800 - margin.left - margin.right,
+      height = 600 - margin.top - margin.bottom;
+
+  // append the svg
+  var svg = d3.select("#timeline_viz")
+    .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+  // timeline axis
+  var x = d3.scaleBand()
+    .range([ 0, width ])
+    .domain(data.map(function(d) { return d.name + ' - ' + d.year; }))
+    .padding(1);
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+      .attr("transform", "translate(-10,0) rotate(-45)")
+      .style("text-anchor", "end");
+
+  //annotations
+  const annotations = [
+    {
+      note: {
+        label: "In February 2011, a criminal gang breached at least three payment processors to take card information during a $55 million stealing spree.",
+        title: "Multinational Prepaid Card Heist"
+      },
+      color: ["red"],
+      x: width/10*2 + margin.left,
+      y: height,
+      dy: -90,
+      dx: 100
+    },
+    {
+      note: {
+        label: "In February 2015, records for 80 million customers were stolen from Anthem, a U.S. healthcare insurer through a spearphishing email.",
+        title: "Health Insurer Hacks"
+      },
+      color: ["red"],
+      x: width/10*6 + margin.left - 20,
+      y: height,
+      dy: -50,
+      dx: 80
+    }
+  ]
+
+  const makeAnnotations = d3.annotation()
+    .annotations(annotations)
+  d3.select("svg")
+    .append("g")
+    .call(makeAnnotations)
+})
+
+</script>
+</body>
+</html>

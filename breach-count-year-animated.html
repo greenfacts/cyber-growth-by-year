@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+    <style>
+        .bar {
+            fill: red;
+        }
+
+        .highlight {
+            fill: orange;
+        }
+
+        .topnav {
+      background-color: darkblue;
+      overflow: hidden;
+    }
+
+    /* Style the links inside the navigation bar */
+    .topnav a {
+      float: left;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      font-size: 17px;
+    }
+
+    /* Change the color of links on hover */
+    .topnav a:hover {
+      background-color: grey;
+      color: black;
+    }
+
+    /* Add a color to the active/current link */
+    .topnav a.active {
+      background-color: lightblue;
+      color: white;
+    }
+    </style>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+  <h1>Number of Data Breaches Reported by Year</h1>
+  <div class="topnav">
+    <a href="major-cyber-events-last-decade.html">Events</a>
+    <a class="active" href="breach-count-year-animated.html">Counts</a>
+    <a href="cost-per-year.html">Cost</a>
+  </div>
+  <br>
+  Despite the attention given to security over the years, the number of data breaches every year has remained high. Note that reporting data breaches has not been a requirement so the actual number is likely much higher.
+  <svg width="600" height="500"></svg>
+  <script>
+
+      var svg = d3.select("svg"),
+          margin = 200,
+          width = svg.attr("width") - margin,
+          height = svg.attr("height") - margin;
+
+      svg.append("text")
+         .attr("transform", "translate(100,0)")
+         .attr("x", 50)
+         .attr("y", 50)
+         .attr("font-size", "24px")
+         .text("Breaches Reported by Year")
+
+      var x = d3.scaleBand().range([0, width]).padding(0.4),
+          y = d3.scaleLinear().range([height, 0]);
+
+      var g = svg.append("g")
+              .attr("transform", "translate(" + 100 + "," + 100 + ")");
+
+      d3.csv("https://raw.githubusercontent.com/greenfacts/cyber-growth-by-year/main/breach-count-by-year.csv", function(data) {
+
+          x.domain(data.map(function(d) { return d.year; }));
+          y.domain([0, d3.max(data, function(d) { return d.records; })]);
+
+          g.append("g")
+           .attr("transform", "translate(0," + height + ")")
+           .call(d3.axisBottom(x))
+           .append("text")
+           .attr("y", height - 250)
+           .attr("x", width/2)
+           .attr("text-anchor", "end")
+           .attr("stroke", "black")
+           .text("Year");
+
+          g.append("g")
+           .call(d3.axisLeft(y).tickFormat(function(d){
+               return d;
+           }).ticks(10))
+           .append("text")
+           .attr("transform", "rotate(-90)")
+           .attr("y", 6)
+           .attr("dy", "-5.1em")
+           .attr("text-anchor", "end")
+           .attr("stroke", "black")
+           .text("Number of Breaches");
+
+          g.selectAll(".bar")
+           .data(data)
+           .enter().append("rect")
+           .attr("class", "bar")
+           .on("mouseover", onMouseOver) //Add listener for the mouseover event
+           .on("mouseout", onMouseOut)   //Add listener for the mouseout event
+           .attr("x", function(d) { return x(d.year); })
+           .attr("y", function(d) { return y(d.records); })
+           .attr("width", x.bandwidth())
+           .attr("height", function(d) { return height - y(d.records); });
+      });
+
+      // zoom on mouse over
+      function onMouseOver(d, i) {
+          d3.select(this).attr('class', 'highlight');
+          d3.select(this)
+            .transition()
+            .duration(400)
+            .attr("y", function(d) { return y(d.records) - 10; })
+            .attr("height", function(d) { return height - y(d.records) + 10; })
+            .attr('width', x.bandwidth() + 5);
+
+          g.append("text")
+           .attr('class', 'val')
+           .attr('x', function() {
+               return x(d.year);
+           })
+           .attr('y', function() {
+               return y(d.records) - 15;
+           })
+           .text(function() {
+               return [d.records];
+           });
+      }
+
+      // remove label on mouse out
+      function onMouseOut(d, i) {
+          d3.select(this).attr('class', 'bar');
+          d3.select(this)
+            .transition()
+            .duration(400)
+            .attr('width', x.bandwidth())
+            .attr("y", function(d) { return y(d.records); })
+            .attr("height", function(d) { return height - y(d.records); });
+
+          d3.selectAll('.val')
+            .remove()
+      }
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+
+<head>
+	<meta charset="utf-8">
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+
+	<style>
+		.line {
+			fill: none;
+			stroke-width: 3px;
+			stroke-linejoin: "round";
+			stroke-linecap: "round";
+		}
+
+		#container{
+		display: flex;
+		flex-wrap: wrap;
+    border-style: "solid";
+		}
+
+		#headline{
+			min-width:100%;
+		}
+
+		#selector{
+			display: inline;
+			width: 100%;
+		}
+
+		#region{
+			display: inline;
+			padding-left: 1%;
+		}
+
+		span{
+			color:rgb(25, 159, 139)
+		}
+
+    .topnav {
+  background-color: darkblue;
+  overflow: hidden;
+}
+    .topnav a {
+      float: left;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      font-size: 17px;
+    }
+
+    .topnav a:hover {
+      background-color: grey;
+      color: black;
+    }
+
+    .topnav a.active {
+      background-color: lightblue;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Average Cost of Breaches by Year</h1>
+  <div class="topnav">
+    <a href="major-cyber-events-last-decade.html">Events</a>
+    <a href="breach-count-year-animated.html">Counts</a>
+    <a class="active" href="cost-per-year.html">Cost</a>
+  </div>
+  <br>
+  The average cost of data breaches within the US has increased steadily since 2012.
+  <br><br>Note that the average cost of breaches worldwide has been relatively constant, however this may be schewed by the relative size of businesses.
+	<div id="container">
+		<p><h2>Select average costs to be displayed.</h2></p>
+	<div id="selector"></div>
+
+	<div class="graph">
+		<svg width="800" height="500"></svg>
+	</div>
+
+	</div>
+
+
+	<script>
+		// margins
+		let svg = d3.select("svg"),
+			margin = {
+				top: 30,
+        bottom: 40,
+        left: 50,
+				right: 100
+			},
+			width = svg.attr("width") - margin.left - margin.right,
+			height = svg.attr("height") - margin.top - margin.bottom,
+			g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    svg.append("text")
+       .attr("transform", "translate(100,0)")
+       .attr("x", 50)
+       .attr("y", 50)
+       .attr("font-size", "24px")
+       .text("Average Cost of Breaches - US and Worldwide")
+
+		// time format
+		var parseTime = d3.timeParse("%Y");
+
+
+		// scales
+		let x = d3.scaleTime().range([0, width]),
+			y = d3.scaleLinear().range([height, 0]),
+			//color scale
+			z = d3.scaleOrdinal(d3.schemeCategory10);
+
+		// line generator
+		let line = d3.line()
+			.curve(d3.curveBasis)
+			.x(function(d) {
+				return x(d.year);
+			})
+			.y(function(d) {
+					return y(d.cost);
+			});
+
+		// data
+    // d3.csv("https://raw.githubusercontent.com/greenfacts/cyber-growth-by-year/main/breach-count-by-year.csv", function(data) {
+		data = d3.csv("https://raw.githubusercontent.com/greenfacts/cyber-growth-by-year/main/cost-by-year.csv", type, function(error, data) {
+      for (var i = 0; i < data.length; i++) {
+       console.log(data[i].year);
+     }
+
+			var us_or_world = data.columns.slice(1).map(function(id) {
+				return {
+					id: id,
+					values: data.map(function(d) {
+						return {
+							year: d.year,
+							cost: d[id]
+
+						};
+					})
+				};
+			});
+
+			//
+
+			// x axis
+			x.domain(d3.extent(data, function(d) {
+				return d.year;
+			}));
+			// y axis
+			y.domain([
+				d3.min(us_or_world, function(c) {
+					return d3.min(c.values, function(d) {
+						return d.cost;
+					});
+				}),
+				d3.max(us_or_world, function(c) {
+					return d3.max(c.values, function(d) {
+						return d.cost;
+					});
+				})
+			]);
+
+			//define color scale
+			z.domain(us_or_world.map(function(c) {
+				return c.id;
+			}));
+
+			//append x axis
+			g.append("g")
+				.attr("class", "axis axis-x")
+				.attr("transform", "translate(0," + height + ")")
+				.call(d3.axisBottom(x))
+				.append("text")
+				.attr("y", 20)
+				.attr("x", 310)
+				.attr("dy", "0.9em")
+
+			//append y axis
+			g.append("g")
+				.attr("class", "axis axis-y")
+				.call(d3.axisLeft(y))
+				.append("text")
+				.attr("transform", "rotate(-90)")
+				.attr("y", -50)
+				.attr("x", -125)
+				.attr("dy", "0.9em")
+				.text("Reported Costs");
+
+			//append breach_cost data
+			let breach_cost = g.selectAll(".breach_cost")
+				.data(us_or_world)
+				.enter()
+				.append("g")
+				.attr("class", "breach_cost")
+
+			// append breach_cost path
+			breach_cost.append("path")
+				.attr("class", "line")
+				.attr('id', function(d){ return 'line-' + d.id })
+			  .attr("d", function(d) {return line(d.values); })
+			  .style("stroke", function(d) {return z(d.id);})
+				.attr("opacity", 0);
+
+			// append breach_cost labels
+			breach_cost.append("text")
+				.datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
+				.attr("transform", function(d) { return "translate(" + x(d.value.year) + "," + y(d.value.cost) + ")"; })
+				.attr("x", 3)
+				.attr('id', function(d){ return 'text-' + d.id })
+				.attr("dy", "0.35em")
+				.style("font", "11px sans-serif")
+				.attr("opacity", 0)
+				.text(function(d) { return d.id; });
+
+			for (let i = 0; i < us_or_world.length; i++) {
+				var cbox = document.createElement('input');
+				cbox.type = 'checkbox';
+				cbox.id = 'region_checkbox';
+				cbox.name = us_or_world[i].id;
+				cbox.value = us_or_world[i].id;
+
+				var label = document.createElement('label');
+				label.for = us_or_world[i].id
+				label.appendChild(document.createTextNode(us_or_world[i].id));
+				var divcheck = document.createElement('div');
+				divcheck.id="region";
+				divcheck.appendChild(cbox);
+				divcheck.appendChild(label);
+				document.getElementById("selector").appendChild(divcheck);
+        d3.selectAll("#region").style("background", "yellow");
+
+				cbox.addEventListener("click", function() {
+
+					var lineSelected = this.value;
+					var svgline = d3.select('#line-' + lineSelected);
+					var textline = d3.select('#text-' + lineSelected);
+
+          // toggle opacity to hide/show
+					if(svgline.attr('opacity') === '0') {
+						svgline.attr('opacity', 1);
+					} else {
+						svgline.attr('opacity', 0);
+					}
+
+					if(textline.attr('opacity') === '0') {
+						textline.attr('opacity', 1);
+					} else {
+						textline.attr('opacity', 0);
+					}
+				});
+			}
+
+
+
+		});
+
+    // get all series
+		function type(d, _, columns) {
+			d.year = parseTime(d.year);
+			//iterate columns
+			for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
+
+			return d;
+		}
+
+    //annotations
+    const annotations = [
+      {
+        note: {
+          label: "(Worldwide breach cost data is unavailable for 2010-2013.)",
+          title: "No Data"
+        },
+        color: ["darkgrey"],
+        x: width/3,
+        y: height + 20,
+        dy: -50,
+        dx: 80
+      }
+    ]
+
+    const makeAnnotations = d3.annotation()
+      .annotations(annotations)
+    d3.select("svg")
+      .append("g")
+      .call(makeAnnotations)
+
+	</script>
+</body>
+
+</html>
