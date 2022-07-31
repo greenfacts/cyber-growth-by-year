@@ -35,7 +35,7 @@
 
 <script src="https://d3js.org/d3.v4.js"></script>
 <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
-<h1>Major Cyber Events of the Last Decade</h1>
+<h1>Major Cybersecurity Data Breach Events of the Last Decade</h1>
 <div class="topnav">
   <a class="active" href="major-cyber-events-last-decade.html">Events</a>
   <a href="breach-count-year-animated.html">Counts</a>
@@ -43,7 +43,7 @@
 </div>
 <br>
 Cybersecurity has come to the forefront of businesses, governments, and individuals in recent years. Data breaches have become a regular event and their impacts are increasing.
-<br><br>The timeline below shows significant data breaches over the past decade. There are two highlight events to provide additional context to the current state of the problem.
+<br><br>The timeline below shows significant data breaches over the past decade. There are two highlighted events to provide additional context to the current state of the problem.
 <br>(Please navigate to the Counts page next. Note the Cost page can only be navigated to from the Counts page.)<br>
 <div id="timeline_viz"></div>
 
@@ -64,6 +64,13 @@ Cybersecurity has come to the forefront of businesses, governments, and individu
     .append("g")
       .attr("transform",
             "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("text")
+     .attr("transform", "translate(100,0)")
+     .attr("x", 50)
+     .attr("y", 50)
+     .attr("font-size", "24px")
+     .text("Timeline of Major Security Breaches (Years)")
 
   // timeline axis
   var x = d3.scaleBand()
